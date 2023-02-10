@@ -1,2 +1,2 @@
 # owlbox_files
-These are the configurations for various OwlBoxes
+These are the files needed for various OwlBox configurations and applications.
