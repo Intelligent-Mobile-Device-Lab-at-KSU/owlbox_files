@@ -1,0 +1,34 @@
+#!/bin/bash
+
+# This is the configuration script that configures the device as a DSRC radio.
+# You should have an FCC license to operate in the U-NII-4 band before running this script!
+
+# wlan0 - the interface of the ath9k Wi-Fi card that will be used as a DSRC radio
+
+# set the link down
+ip link set wlan0 down
+wait
+
+# change the type from managed to Outside the Context of a Basic Service Set (BSS)
+iw dev wlan0 set type ocb
+wait
+
+# Check ~/wireless-regdb/db.txt to see how we configured the database to match the kernel
+# this line sets the regulation to United States
+iw reg set US
+wait
+
+# Print the current regulatory setting for the US
+iw reg get
+wait
+
+# Set the wlan0 link up
+ip link set wlan0 up
+wait
+
+# Change the channel of wlan0 to 5.9GHz with 10MHz of bandwidth
+# See DSRC channelization for more information.
+iw dev wlan0 ocb join 5900 10MHZ
+wait
+
+echo "Box is now DSRC-V2X!"
