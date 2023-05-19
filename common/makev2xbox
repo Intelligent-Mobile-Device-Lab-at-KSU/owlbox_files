@@ -28,7 +28,7 @@ wait
 
 # Change the channel of wlan0 to 5.9GHz with 10MHz of bandwidth
 # See DSRC channelization for more information.
-iw dev wlan0 ocb join 5900 10MHZ
+iw dev wlan0 ocb join 5885 20MHZ
 wait
 
 echo "Box is now DSRC-V2X!"
