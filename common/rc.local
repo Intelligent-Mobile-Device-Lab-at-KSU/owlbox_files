@@ -1,0 +1,37 @@
+#!/bin/sh -e
+#
+# rc.local
+#
+# This script is executed at the end of each multiuser runlevel.
+# Make sure that the script will "exit 0" on success or any other
+# value on error.
+#
+# In order to enable or disable this script just change the execution
+# bits.
+#
+# By default this script does nothing.
+
+# Print the IP address
+#_IP=$(hostname -I) || true
+#if [ "$_IP" ]; then
+#  printf "My IP address is %s\n" "$_IP"
+#fi
+
+while ! ifconfig | grep -F "192.168.1." > /dev/null; do echo "waiting"; sleep 1; done
+sleep 20
+
+sudo chmod +x /home/pi/repos/owlbox_files/common/makev2xbox
+sudo /home/pi/repos/owlbox_files/common/makev2xbox
+sleep 1
+sudo /home/pi/repos/owlbox_files/common/makev2xbox
+sleep 1
+sudo /home/pi/repos/owlbox_files/common/makev2xbox
+sleep 1
+sudo /home/pi/repos/owlbox_files/common/makev2xbox
+sleep 1
+
+sudo python3 /home/pi/repos/owlbox_files/test/bootdsrctx.py
+
+#touch /home/pi/Desktop/connected.txt
+
+exit 0
