@@ -5,20 +5,20 @@ import time
 from datetime import datetime, timedelta
 
 # Get the host name
-host_name = socket.gethostname()
+#host_name = socket.gethostname()
 
 # TCP server details
-server_address = ('192.168.1.3', 4030)
+#server_address = ('192.168.1.3', 4030)
 
-try:
+#try:
     # Create a TCP socket
-    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+#    client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
     # Connect to the TCP server
-    client_socket.connect(server_address)
+#    client_socket.connect(server_address)
 
-except ConnectionRefusedError:
-    print("Connection to the server failed.")
+#except ConnectionRefusedError:
+#    print("Connection to the server failed.")
 
 t_cam = "\xFF\xFF\xFF\xFF\xFF\xFF\x74\xE5\x43\xD5\xFD\xA4\x89\x47\x01\x00\xF1\x01\x20\x50\x02\x74\x00\x2D\x01\x00\x95\xF9\x74\xE5\x43\xD5\xFD\xA4\xA7\x84\x11\x99\x19\x54\x08"
 
@@ -56,11 +56,11 @@ encoded = bytes_encode(pkt)
 while True:
      s.send(encoded)
      # Get the current date and time
-     current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+     #current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
      # Combine the host name and date-time into a string
-     message = f"{host_name},{current_time}"
+     #message = f"{host_name},{current_time}"
      # Send the message to the server
-     client_socket.sendall(message.encode())
+     #client_socket.sendall(message.encode())
 
 # Close the socket
-client_socket.close()
+#client_socket.close()
