@@ -20,17 +20,17 @@
 while ! ifconfig | grep -F "192.168.1." > /dev/null; do echo "waiting"; sleep 1; done
 sleep 20
 
-sudo chmod +x /home/pi/repos/owlbox_files/common/makev2xbox
-sudo /home/pi/repos/owlbox_files/common/makev2xbox
+sudo chmod +x /home/pi/owlbox_files/common/makev2xbox
+sudo /home/pi/owlbox_files/common/makev2xbox
 sleep 1
-sudo /home/pi/repos/owlbox_files/common/makev2xbox
+sudo /home/pi/owlbox_files/common/makev2xbox
 sleep 1
-sudo /home/pi/repos/owlbox_files/common/makev2xbox
+sudo /home/pi/owlbox_files/common/makev2xbox
 sleep 1
-sudo /home/pi/repos/owlbox_files/common/makev2xbox
+sudo /home/pi/owlbox_files/common/makev2xbox
 sleep 1
 
-sudo python3 /home/pi/repos/owlbox_files/test/bootdsrctx.py
+sudo python3 /home/pi/owlbox_files/test/bootdsrctx.py
 
 #touch /home/pi/Desktop/connected.txt
 
