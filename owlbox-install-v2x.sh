@@ -13,5 +13,4 @@ echo "Copying wpa_supplicant-wlan1.conf..."
 sudo cp common/wpa_supplicant/v2x/wpa_supplicant-wlan1.conf /etc/wpa_supplicant/wpa_supplicant-wlan1.conf
 echo "Copying rc.local..."
 sudo cp common/rc.local /etc/rc.local
-echo "Copying rc.local..."
 echo "OwlBox-V2X Install Complete!"
