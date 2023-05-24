@@ -86,7 +86,11 @@ def checkServer():
         cs = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         server_address = ('192.168.1.4', 8001)
         cs.sendto("checklog-{}".format(host_name).encode('utf-8'),server_address)
-        r = cs.recvfrom(1024)
+        cs.settimeout(.5)
+        try:
+            r = cs.recvfrom(4096)
+        except:
+            continue
         rm = r[0].decode('utf-8')
         if rm == "log":
             doLog=True
