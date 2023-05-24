@@ -4,6 +4,7 @@ cd /home/pi/owlbox_files
 echo "Performing git pull..."
 git pull
 wait 5
+rm /home/pi/owlbox_files/logs/_blank.txt
 echo "...Done."
 echo "Making makv2xbox executable..."
 chmod +x common/makev2xbox
