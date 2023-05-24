@@ -20,7 +20,7 @@
 while ! ifconfig | grep -F "192.168.1." > /dev/null; do echo "waiting"; sleep 1; done
 sleep 20
 
-python3 -m http.server -d /home/pi/owlbox_files/logs 8000
+python3 -m http.server -d /home/pi/owlbox_files/logs 8000 &
 sleep 1
 sudo chmod +x /home/pi/owlbox_files/common/makev2xbox
 sudo /home/pi/owlbox_files/common/makev2xbox
