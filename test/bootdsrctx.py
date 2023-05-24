@@ -88,7 +88,7 @@ def checkServer():
         cs.sendto("checklog-{}".format(host_name).encode('utf-8'),server_address)
         cs.settimeout(.5)
         try:
-            r = cs.recvfrom(4096)
+            r = cs.recvfrom(1024)
         except:
             continue
         rm = r[0].decode('utf-8')
