@@ -1,9 +1,10 @@
 #!/bin/bash
 echo "Changing to /home/pi/owlbox_files"
-cd /home/pi/owlbox_files
-echo "Performing git pull..."
-git pull
-wait 5
+cd /home/pi
+echo "Removing old repo"
+rm -r /home/pi/owlbox_files
+echo "Cloning current repo..."
+git clone https://github.com/Intelligent-Mobile-Device-Lab-at-KSU/owlbox_files.git
 rm /home/pi/owlbox_files/logs/_blank.txt
 echo "...Done."
 echo "Making makv2xbox executable..."
