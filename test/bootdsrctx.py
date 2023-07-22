@@ -161,45 +161,48 @@ def checkServer():
 x = threading.Thread(target=checkServer)
 x.start()
 while True:
-    if not changingChannel:
-        #print(wlanTrafficType)
-        payload = ''.encode()
-        payloadDelay = 0
-        o = (payload,payloadDelay)
-        if wlanTrafficType=="FTP":
-            o = realwlantraffic.trafficFTP()
-            payload = o[0]
-            payloadDelay = o[1]
-        elif wlanTrafficType=="VIDEOCONF":
-            o = realwlantraffic.videoConferencing()
-            payload = o[0]
-            payloadDelay = o[1]
-        elif wlanTrafficType=="WEB":
-            o = realwlantraffic.webBrowsing()
-            payload = o[0]
-            payloadDelay = o[1]
-        elif wlanTrafficType=="FULL_RATE_FIXED_LEN":
-            #print(changingChannel)
-            payload = encoded
+    try:
+        if not changingChannel:
+            #print(wlanTrafficType)
+            payload = ''.encode()
             payloadDelay = 0
             o = (payload,payloadDelay)
-        else:
-            print('Why are we here?')
-        
-        #print((len(o[0]),o[1]))
-        #print(wlanTrafficType)
-        time.sleep(payloadDelay/1000)
-        s.send(payload)
-        
-    if doLog:
-     logging.debug("{}-{}".format(len(payload),wlanTrafficType))
-    # Get the current date and time
-    #current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    # Combine the host name and date-time into a string
-    #message = f"{host_name},{current_time}"
-    # Send the message to the server
-    #client_socket.sendall(message.encode())
-    #time.sleep(.000001)
+            if wlanTrafficType=="FTP":
+                o = realwlantraffic.trafficFTP()
+                payload = o[0]
+                payloadDelay = o[1]
+            elif wlanTrafficType=="VIDEOCONF":
+                o = realwlantraffic.videoConferencing()
+                payload = o[0]
+                payloadDelay = o[1]
+            elif wlanTrafficType=="WEB":
+                o = realwlantraffic.webBrowsing()
+                payload = o[0]
+                payloadDelay = o[1]
+            elif wlanTrafficType=="FULL_RATE_FIXED_LEN":
+                #print(changingChannel)
+                payload = encoded
+                payloadDelay = 0
+                o = (payload,payloadDelay)
+            else:
+                print('Why are we here?')
+            
+            #print((len(o[0]),o[1]))
+            #print(wlanTrafficType)
+            time.sleep(payloadDelay/1000)
+            s.send(payload)
+            
+        if doLog:
+         logging.debug("{}-{}".format(len(payload),wlanTrafficType))
+        # Get the current date and time
+        #current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        # Combine the host name and date-time into a string
+        #message = f"{host_name},{current_time}"
+        # Send the message to the server
+        #client_socket.sendall(message.encode())
+        #time.sleep(.000001)
+    except:
+        continue
 
 # Close the socket
 #client_socket.close()
