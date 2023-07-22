@@ -6,6 +6,10 @@ from datetime import datetime, timedelta
 import logging
 import threading
 import subprocess
+import os
+import realwlantraffic
+
+wlanTrafficType = 'FTP'
 
 def countfiles():
     fcount=0
@@ -71,17 +75,20 @@ s.bind(("wlan0", 0))
 #message = dst_addr+src_addr+ethertype+payload
 encoded = bytes_encode(pkt)
 
-traffictype = "video"
-
 def dellogs():
     bash_cmd = f"rm -f /home/pi/owlbox_files/logs/*"
     try:
         subprocess.run(bash_cmd,shell=True, check=True)
     except subprocess.CalledProcessError as e:
         print("Error Occured: {e}")
-    
+
+changingChannel = False
 def checkServer():
     global doLog
+    global changingChannel
+    global wlanTrafficType
+    ch='5885'
+    chbw='20'
     while True:
         cs = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         server_address = ('192.168.1.4', 8001)
@@ -92,39 +99,107 @@ def checkServer():
         except:
             continue
         rm = r[0].decode('utf-8')
-        if rm == "log":
+        rmarr = rm.split("-")
+        if rmarr[0] == "log":
             doLog=True
             current_time = datetime.now().strftime('%m_%d_%Y_%H_%M')
             logging.basicConfig(filename="/home/pi/owlbox_files/logs/{}_{}.log".format(host_name,current_time), level=logging.DEBUG, format='%(asctime)s.%(msecs)03d %(levelname)s %(message)s',datefmt='%Y-%m-%d %H:%M:%S')
             noLogFilePresent = False
-        elif rm == "nolog":
+        elif rmarr[0] == "nolog":
             doLog=False
-        elif rm == "logdeletealllogs":
+        elif rmarr[0] == "logdeletealllogs":
             dellogs()
             current_time = datetime.now().strftime('%m_%d_%Y_%H_%M')
             logging.basicConfig(filename="/home/pi/owlbox_files/logs/{}_{}.log".format(host_name,current_time), level=logging.DEBUG, format='%(asctime)s.%(msecs)03d %(levelname)s %(message)s',datefmt='%Y-%m-%d %H:%M:%S')
             noLogFilePresent = False
             doLog=True
-        elif rm=="nologdeletealllogs":
+        elif rmarr[0]=="nologdeletealllogs":
             doLog=False
             dellogs()
             noLogFilePresent = True
-            
+        
+        wlanTrafficType = rmarr[1]
+        #print(wlanTrafficType)
+        server_address_chnum = ('192.168.1.4', 8002)
+        cs.sendto("txparams-{}".format("channelnum").encode('utf-8'),server_address_chnum)
+        cs.settimeout(.5)
+        try:
+            r = cs.recvfrom(1024)
+        except:
+            continue
+        rm = r[0].decode('utf-8')
+        
+        arr = rm.split("-")  
+        #print(arr)
+        if arr[0]==ch and arr[1]==chbw:
+            continue
+        else:
+            ch=arr[0]
+            chbw=arr[1]
+            changingChannel = True
+            cmd = 'ip link set wlan0 down'
+            os.system(cmd)
+            time.sleep(.1)
+            cmd = 'iw dev wlan0 set type ocb'
+            os.system(cmd)
+            time.sleep(.1)
+            cmd = 'iw reg set US'
+            os.system(cmd)
+            time.sleep(.1)
+            cmd = 'ip link set wlan0 up'
+            os.system(cmd)
+            time.sleep(.1)
+            cmd = 'iw dev wlan0 ocb join %s %sMHZ' % (arr[0],arr[1])
+            #print(cmd)
+            os.system(cmd) 
+            #cmd = 'iw wlan0 info'
+            #os.system(cmd)
+            time.sleep(.1)
+        changingChannel = False
         time.sleep(1)
 
 x = threading.Thread(target=checkServer)
 x.start()
 while True:
-     s.send(encoded)
-     if doLog:
-         logging.debug("{}-{}".format(len(encoded),traffictype))
-     # Get the current date and time
-     #current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-     # Combine the host name and date-time into a string
-     #message = f"{host_name},{current_time}"
-     # Send the message to the server
-     #client_socket.sendall(message.encode())
-     #time.sleep(.000001)
+    if not changingChannel:
+        #print(wlanTrafficType)
+        payload = ''.encode()
+        payloadDelay = 0
+        o = (payload,payloadDelay)
+        if wlanTrafficType=="FTP":
+            o = realwlantraffic.trafficFTP()
+            payload = o[0]
+            payloadDelay = o[1]
+        elif wlanTrafficType=="VIDEOCONF":
+            o = realwlantraffic.videoConferencing()
+            payload = o[0]
+            payloadDelay = o[1]
+        elif wlanTrafficType=="WEB":
+            o = realwlantraffic.webBrowsing()
+            payload = o[0]
+            payloadDelay = o[1]
+        elif wlanTrafficType=="FULL_RATE_FIXED_LEN":
+            #print(changingChannel)
+            payload = encoded
+            payloadDelay = 0
+            o = (payload,payloadDelay)
+        else:
+            print('Why are we here?')
+        
+        #print((len(o[0]),o[1]))
+        #print(wlanTrafficType)
+        time.sleep(payloadDelay/1000)
+        s.send(payload)
+        
+    if doLog:
+     logging.debug("{}-{}".format(len(payload),wlanTrafficType))
+    # Get the current date and time
+    #current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    # Combine the host name and date-time into a string
+    #message = f"{host_name},{current_time}"
+    # Send the message to the server
+    #client_socket.sendall(message.encode())
+    #time.sleep(.000001)
 
 # Close the socket
 #client_socket.close()
