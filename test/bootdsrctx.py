@@ -8,8 +8,126 @@ import threading
 import subprocess
 import os
 import realwlantraffic
+import signal
+import sys
 
+# Create a global stop event
+stop_event = threading.Event()
+
+# OLED Display
+import board
+import busio
+import digitalio
+from PIL import Image, ImageDraw, ImageFont
+import adafruit_ssd1306
+
+#OLED
+BORDER = 5
+
+# Initialize I2C bus
+i2c = busio.I2C(board.SCL, board.SDA)
+
+# Initialize the OLED display
+oled = adafruit_ssd1306.SSD1306_I2C(128, 32, i2c)
+
+# Load a TrueType font with a smaller size
+font_path = "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"  # Adjust path if needed
+font_size = 10  # Small font size
+font = ImageFont.truetype(font_path, font_size)
+
+def handle_sigint(signal_received, frame):
+    stop_event.set()  # Signal all threads to stop
+    time.sleep(1)  # Give time for cleanup
+    print("\nCtrl+C detected. Exiting gracefully!")
+    sys.exit(0)
+
+# Register the signal handler
+signal.signal(signal.SIGINT, handle_sigint)
+
+def get_device_name():
+    return socket.gethostname()
+
+
+def get_ip_address():
+    try:
+        # Get the IP address of wlan1 using `ip` command
+        ip = subprocess.check_output("ip addr show wlan1 | grep 'inet ' | awk '{print $2}'", shell=True).decode().split()[0]
+        return ip
+    except Exception:
+        return "No IP"
+
+
+
+def get_temperature():
+    try:
+        # Get temperature in Celsius
+        temp_celsius = subprocess.check_output("vcgencmd measure_temp", shell=True).decode()
+        temp_celsius = float(temp_celsius.replace("temp=", "").replace("'C", "").strip())
+        
+        # Convert to Fahrenheit
+        temp_fahrenheit = (temp_celsius * 9/5) + 32
+        
+        # Define overheating threshold (85°C or 185°F)
+        OVERHEAT_THRESHOLD_F = 185  # Overheating threshold in Fahrenheit
+        
+        # Check if the temperature is safe or overheating
+        if temp_fahrenheit > OVERHEAT_THRESHOLD_F:
+            return f"OVERHEAT ({temp_fahrenheit:.2f}°F)"
+        else:
+            return f"TEMP OK ({temp_fahrenheit:.2f}°F)"
+    
+    except Exception:
+        return "No Temp"
+
+
+
+
+def get_radio_status():
+    global xwlanTrafficType
+    global chch
+    global chbwbw
+    try:
+        return xwlanTrafficType + "|" + chch + " MHz|" + chbwbw + " MHz"
+    except Exception:
+        return "No Status"
+
+
+def display_text(lines):
+    """Clears the display and shows given lines of text."""
+    image = Image.new("1", (oled.width, oled.height))
+    draw = ImageDraw.Draw(image)
+
+    # Clear screen with black background
+    draw.rectangle((0, 0, oled.width, oled.height), outline=0, fill=0)  # black background
+
+    # Set initial text position
+    x, y = BORDER, BORDER
+    line_spacing = font.getsize("A")[1] + 2  # Height of a line + small padding
+
+    # Draw each line with white text
+    for line in lines:
+        draw.text((x, y), line, font=font, fill=255)  # White text
+        y += line_spacing  # Move down for the next line
+
+    # Display on OLED
+    oled.image(image)
+    oled.show()
+
+
+def cycle_display():
+    """Cycles through two screens every 5 seconds."""
+    while not stop_event.is_set():
+        display_text([get_device_name()+".local", get_ip_address()])
+        time.sleep(3)
+
+        display_text([get_temperature(), get_radio_status()])
+        time.sleep(3)
+
+
+xwlanTrafficType = 'FTP'
 wlanTrafficType = 'FTP'
+chch = '5885'
+chbwbw = '20'
 
 def countfiles():
     fcount=0
@@ -87,9 +205,12 @@ def checkServer():
     global doLog
     global changingChannel
     global wlanTrafficType
+    global xwlanTrafficType
+    global chch
+    global chbwbw
     ch='5885'
     chbw='20'
-    while True:
+    while not stop_event.is_set():
         cs = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         server_address = ('192.168.1.4', 8001)
         cs.sendto("checklog-{}".format(host_name).encode('utf-8'),server_address)
@@ -119,6 +240,7 @@ def checkServer():
             noLogFilePresent = True
         
         wlanTrafficType = rmarr[1]
+        xwlanTrafficType=wlanTrafficType
         #print(wlanTrafficType)
         server_address_chnum = ('192.168.1.4', 8002)
         cs.sendto("txparams-{}".format("channelnum").encode('utf-8'),server_address_chnum)
@@ -136,6 +258,8 @@ def checkServer():
         else:
             ch=arr[0]
             chbw=arr[1]
+            chch=ch
+            chbwbw=chbw
             changingChannel = True
             cmd = 'ip link set wlan0 down'
             os.system(cmd)
@@ -160,7 +284,9 @@ def checkServer():
 
 x = threading.Thread(target=checkServer)
 x.start()
-while True:
+xoled = threading.Thread(target=cycle_display)
+xoled.start()
+while not stop_event.is_set():
     try:
         if not changingChannel:
             #print(wlanTrafficType)
@@ -168,18 +294,22 @@ while True:
             payloadDelay = 0
             o = (payload,payloadDelay)
             if wlanTrafficType=="FTP":
+                xwlanTrafficType="FTP"
                 o = realwlantraffic.trafficFTP()
                 payload = o[0]
                 payloadDelay = o[1]
             elif wlanTrafficType=="VIDEOCONF":
+                xwlanTrafficType="VID"
                 o = realwlantraffic.videoConferencing()
                 payload = o[0]
                 payloadDelay = o[1]
             elif wlanTrafficType=="WEB":
+                xwlanTrafficType="WEB"
                 o = realwlantraffic.webBrowsing()
                 payload = o[0]
                 payloadDelay = o[1]
             elif wlanTrafficType=="FULL_RATE_FIXED_LEN":
+                xwlanTrafficType="FUL"
                 #print(changingChannel)
                 payload = encoded
                 payloadDelay = 0
